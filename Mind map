@@ -1,1 +1,12 @@
+Customer's Virtual Wallet Project
+         (User and Admin Sides)
+
+                Main Menu
+                /   |    \
+            User   Admin   Exit
+             /        \
+    View Wallet     Admin Menu
+    Add Money         /   |   \
+   Make Purchase   Add   Edit   Delete
+                  User   User   User
 
