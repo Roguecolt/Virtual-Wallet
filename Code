@@ -1,0 +1,283 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Structure to store user information
+struct User {
+    int id;
+    char username[50];
+    float balance;
+};
+
+// Function to create a new user
+struct User createUser(int id, char username[50], float balance) {
+    struct User newUser;
+    newUser.id = id;
+    strcpy(newUser.username, username);
+    newUser.balance = balance;
+    return newUser;
+}
+
+// Function to display user details
+void displayUser(struct User user) {
+    printf("User ID: %d\n", user.id);
+    printf("Username: %s\n", user.username);
+    printf("Balance: $%.2f\n", user.balance);
+}
+
+// Function to add money to a user's wallet
+void addMoney(struct User *user, float amount) {
+    user->balance += amount;
+    printf("Added $%.2f to %s's wallet. New balance: $%.2f\n", amount, user->username, user->balance);
+}
+
+// Function to make a purchase
+void makePurchase(struct User *user, float amount) {
+    if (user->balance >= amount) {
+        user->balance -= amount;
+        printf("Made a purchase of $%.2f. New balance: $%.2f\n", amount, user->balance);
+    } else {
+        printf("Insufficient balance for the purchase.\n");
+    }
+}
+
+// Function to find a user by ID
+struct User *findUserById(struct User users[], int userCount, int userId) {
+    for (int i = 0; i < userCount; i++) {
+        if (users[i].id == userId) {
+            return &users[i];
+        }
+    }
+    return NULL; // User not found
+}
+
+// Function to display the main menu
+int showMainMenu() {
+    int choice;
+    printf("Main Menu:\n");
+    printf("1. User\n");
+    printf("2. Admin\n");
+    printf("3. Exit\n");
+    printf("Enter your choice: ");
+    scanf("%d", &choice);
+    return choice;
+}
+
+// Function to handle the user menu
+void handleUserMenu(struct User users[], int *userCount) {
+    int choice;
+    int userId;
+    char username[50];
+    float amount;
+
+    // User authentication
+    printf("User Login:\n");
+    printf("Enter your user ID: ");
+    scanf("%d", &userId);
+    printf("Enter your username: ");
+    scanf("%s", username);
+
+    struct User *user = findUserById(users, *userCount, userId);
+
+    if (user != NULL && strcmp(user->username, username) == 0) {
+        printf("User access granted.\n");
+    } else {
+        printf("User not found or authentication failed. Access denied.\n");
+        return;
+    }
+
+    while (1) {
+        printf("User Menu:\n");
+        printf("1. View Wallet\n");
+        printf("2. Add Money\n");
+        printf("3. Make Purchase\n");
+        printf("4. Return to Main Menu\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: // View Wallet
+                displayUser(*user);
+                break;
+
+            case 2: // Add Money
+                printf("Enter the amount to add: $");
+                if (scanf("%f", &amount) != 1 || amount <= 0) {
+                    printf("Invalid amount.\n");
+                    continue; // Continue the loop to re-enter the amount
+                }
+                addMoney(user, amount);
+                break;
+
+            case 3: // Make Purchase
+                printf("Enter the purchase amount: $");
+                if (scanf("%f", &amount) != 1 || amount <= 0) {
+                    printf("Invalid amount.\n");
+                    continue; // Continue the loop to re-enter the amount
+                }
+                makePurchase(user, amount);
+                break;
+
+            case 4: // Return to Main Menu
+                return;
+            default:
+                printf("Invalid choice.\n");
+                break;
+        }
+    }
+}
+
+// Define admin username and password
+#define ADMIN_USERNAME "admin"
+#define ADMIN_PASSWORD "password"
+
+// Function to handle the admin menu
+void handleAdminMenu(struct User users[], int *userCount) {
+    char username[50];
+    char password[50];
+    int choice;
+    int userId;
+    char newUsername[50];
+    float newBalance;
+
+    // Admin login step
+    printf("Admin Login:\n");
+    printf("Username: ");
+    scanf("%s", username);
+    printf("Password: ");
+    scanf("%s", password);
+
+    if (strcmp(username, ADMIN_USERNAME) != 0 || strcmp(password, ADMIN_PASSWORD) != 0) {
+        printf("Invalid admin credentials. Access denied.\n");
+        return;
+    }
+
+    printf("Admin access granted.\n");
+
+    while (1) {
+        printf("Admin Menu:\n");
+        printf("1. Add User\n");
+        printf("2. Edit User\n");
+        printf("3. Delete User\n");
+        printf("4. Return to Main Menu\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: // Add User
+                printf("Enter the new user ID: ");
+                scanf("%d", &userId);
+                // Check if the user ID already exists
+                if (findUserById(users, *userCount, userId) != NULL) {
+                    printf("User with the same ID already exists.\n");
+                    continue; // Continue the loop to re-enter the ID
+                }
+                printf("Enter the new username: ");
+                scanf("%s", newUsername);
+                printf("Enter the initial balance: $");
+                if (scanf("%f", &newBalance) != 1 || newBalance < 0) {
+                    printf("Invalid balance.\n");
+                    continue; // Continue the loop to re-enter the balance
+                }
+                users[*userCount] = createUser(userId, newUsername, newBalance);
+                (*userCount)++;
+                printf("User added successfully.\n");
+                break;
+
+            case 2: // Edit User
+                printf("Enter the user ID to edit: ");
+                scanf("%d", &userId);
+                struct User *userToEdit = findUserById(users, *userCount, userId);
+                if (userToEdit != NULL) {
+                    printf("Enter the new username: ");
+                    scanf("%s", newUsername);
+                    printf("Enter the new balance: $");
+                    if (scanf("%f", &newBalance) != 1 || newBalance < 0) {
+                        printf("Invalid balance.\n");
+                        continue; // Continue the loop to re-enter the balance
+                    }
+                    strcpy(userToEdit->username, newUsername);
+                    userToEdit->balance = newBalance;
+                    printf("User updated successfully.\n");
+                } else {
+                    printf("User not found.\n");
+                }
+                break;
+
+            case 3: // Delete User
+                printf("Enter the user ID to delete: ");
+                scanf("%d", &userId);
+                int deleteUserIndex = -1;
+                for (int i = 0; i < *userCount; i++) {
+                    if (users[i].id == userId) {
+                        deleteUserIndex = i;
+                        break;
+                    }
+                }
+                if (deleteUserIndex != -1) {
+                    // Shift users to fill the gap
+                    for (int i = deleteUserIndex; i < *userCount - 1; i++) {
+                        users[i] = users[i + 1];
+                    }
+                    (*userCount)--;
+                    printf("User deleted successfully.\n");
+                } else {
+                    printf("User not found.\n");
+                }
+                break;
+
+            case 4: // Return to Main Menu
+                return;
+            default:
+                printf("Invalid choice.\n");
+                break;
+        }
+    }
+}
+
+int main() {
+    struct User users[100]; // Assuming a maximum of 100 users
+    int userCount = 0;
+
+    // Load user data from a file (assuming a simple text file with user data)
+    FILE *file = fopen("users.txt", "r");
+    if (file != NULL) {
+        while (fscanf(file, "%d %s %f", &users[userCount].id, users[userCount].username, &users[userCount].balance) != EOF) {
+            userCount++;
+        }
+        fclose(file);
+    }
+
+    int choice;
+
+    while (1) {
+        choice = showMainMenu();
+
+        switch (choice) {
+            case 1: // User Menu
+                handleUserMenu(users, &userCount);
+                break;
+
+            case 2: // Admin Menu
+                handleAdminMenu(users, &userCount);
+                break;
+
+            case 3: // Exit
+                // Save user data to a file before exiting
+                file = fopen("users.txt", "w");
+                if (file != NULL) {
+                    for (int i = 0; i < userCount; i++) {
+                        fprintf(file, "%d %s %.2f\n", users[i].id, users[i].username, users[i].balance);
+                    }
+                    fclose(file);
+                }
+                exit(0);
+
+            default:
+                printf("Invalid choice.\n");
+                break;
+        }
+    }
+
+    return 0;
+}
